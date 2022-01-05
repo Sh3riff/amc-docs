@@ -11,43 +11,442 @@ info:
 servers:
   - url: http://localhost:5000
     description: local server address
+  - url: https://amc-docs.herokuapp.com/
+    description: heroku host address
 
 components:
   securitySchemes:
-    BasicAuth:
-      type: http
-      scheme: basic
-    BearerAuth:
+    AMCAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 
-security:
-  - bearerAuth: []
+  schemas:
+    role:
+      type: string
+      enum: [members, admin]
+    
+    status:
+      type: string
+      enum: [ACTIVE]
+
+    gender:
+      type: string
+      enum: [male, female, other]
+
+    roles:
+      type: array
+      items:
+        type: string
+        enum: [members, admin]
+
+    userObject:
+      type: object
+      properties:
+        clubs: 
+          type: object
+          properties:
+            1:
+              type: object
+              properties:
+                id:
+                  type: string
+                  default: 35
+                clubId:
+                  type: string
+                  default: 1
+                role:
+                  $ref: '#/components/schemas/role'
+                dateJoined:
+                  type: string
+                  default: 1640609249
+            2:
+              type: object
+              properties:
+                id:
+                  type: string
+                  default: 42
+                clubId:
+                  type: string
+                  default: 2
+                role:
+                  $ref: '#/components/schemas/role'
+                dateJoined:
+                  type: string
+                  default: 1640609249
+        activities: 
+          type: object
+          properties:
+            27:
+              type: object
+              properties:
+                participantId:
+                  type: string
+                  default: 54
+                clubId:
+                  type: string
+                  default: 1
+                activityId:
+                  type: string
+                  default: 27
+                role:
+                  $ref: '#/components/schemas/role'
+                dateJoined:
+                  type: string
+                  default: 1640609249
+        interests:
+          type: array
+          items:
+            type: string
+        images: 
+          type: object
+        contact: 
+          type: object
+        roles:
+          $ref: '#/components/schemas/roles'
+        permissions:
+          type: array
+          items:
+            type: string
+        id:
+          type: number
+          default: 123
+        username:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [ACTIVE]
+        dateCreated:
+          type: string
+          default: 1640609249
+        lastUpdated:
+          type: string
+          default: null
+        profile: 
+          type: object
+          properties:
+          firstName:
+            type: string
+          lastName:
+            type: string
+          gender:
+            $ref: '#/components/schemas/gender'
+          location_country:
+            type: string
+          location_city:
+            type: string
+        settings:
+          type: object
+        meta:
+          type: object
+    
+    authResponseObject:
+      type: object
+      properties:
+        status:
+          type: number
+          default: 200
+        data:
+          $ref: '#/components/schemas/userObject'
+
+
 
 paths:
-  /user:
+
+  #               Authentication
+
+  /users/registration:
+    post:
+      tags:
+        - Authentication
+      summary: User Registration
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  required: true
+                lastName:
+                  type: string
+                  required: true
+                location_country:
+                  type: string
+                  required: true
+                location_city:
+                  type: string
+                  required: true
+                gender:
+                  $ref: '#/components/schemas/gender'
+                  required: true
+                emailAddress:
+                  type: string
+                  format: email
+                  required: true
+                password:
+                  type: string
+                  format: password
+                  minLength: 5
+                  required: true
+                extra:
+                  type: array
+                  items:
+                    type: string
+                    default: array should be empty
+      responses:
+        200_1:
+          description: Successful Registraion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authResponseObject'
+
+        200_2:
+          description: Email has been registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    default: 500
+                  error:
+                    type: object
+                    properties:
+                      message: 
+                        type: string
+                        default: Email address is already registered
+        200_3:
+          description: Missing Parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    default: 500
+                  error:
+                    type: object
+                    properties:
+                      message: 
+                        type: string
+                        default: "Missing required data: 'nameOfField'"
+
+  /session:
+    post:
+      tags:
+        - Authentication
+      summary: User Login
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  format: email
+                  required: true
+                password:
+                  type: string
+                  format: password
+                  minLength: 5
+                  required: true
+      responses:
+        200_1:
+          description: Successful Login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authResponseObject'
+        200_2:
+          description: Wrong email and or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    default: 500
+                  error:
+                    type: object
+                    properties:
+                      message: 
+                        type: string
+                        default: Username or password is incorrect
+        200_3:
+          description: Missing Parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    default: 500
+                  error:
+                    type: object
+                    properties:
+                      message: 
+                        type: string
+                        default: "Missing required data: 'nameOfField'"
+
+#             USERS
+  /users:
     get:
       tags:
-        - users
-      summary: AMC USERSS
-  /post:
+        - Users
+      summary: Get all users
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of all Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/userObject'
+    post:
+      tags:
+        - Users
+      summary: Unknown Endpoint
+      security:
+        - AMCAuth: []
+    put:
+      tags:
+        - Users
+      summary: Unknown Endpoint
+      security:
+        - AMCAuth: []
+    delete:
+      tags:
+        - Users
+      summary: Unknown Endpoint
+      security:
+        - AMCAuth: []
+
+#             USER
+  /user/:userId:
     get:
       tags:
-        - posts
-      summary: AMC POSTS
-  /clubs:
-    get:
+        - User/profile
+      summary: Get single user by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          default: 159
+          schema:
+            type: number
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Users Info
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/userObject'
+    put:
       tags:
-        - clubs
-      summary: AMC CLUBS
-  /members:
-    get:
-      tags:
-        - members
-      summary: AMC MEMBERS
-  /outputs:
-    get:
-      tags:
-        - outputs
-      summary: AMC OUTPUTS
+        - User/profile
+      summary: Update single user by ID
+      security:
+        - AMCAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          default: 159
+          schema:
+            type: number
+      produces:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  required: true
+                  $ref: '#/components/schemas/roles'
+                status:
+                  required: true
+                  $ref: '#/components/schemas/status'
+                permissions:
+                  required: true
+                  type: array
+                  items:
+                    type: string
+                    default: empty for now
+                interests:
+                  required: true
+                  type: array
+                  items:
+                    type: string
+                    default: empty for now
+                settings:
+                  required: true
+                  type: object
+                profile:
+                  required: true
+                  type: object
+                  properties:
+                    firstName:
+                      type: string
+                      required: true
+                    lastName:
+                      type: string
+                      required: true
+                    location_country:
+                      type: string
+                      required: true
+                    location_city:
+                      type: string
+                      required: true
+                    gender:
+                      $ref: '#/components/schemas/gender'
+      responses:
+        200:
+          description: Users Info
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/userObject'
+        200-bad:
+          description: Users Info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    default: 500
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        default: 'Missing required data: status, roles permissions, profile, settings, interests'
+

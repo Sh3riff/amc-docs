@@ -13,4 +13,4 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocs, { explorer: true })
 )
-app.listen(process.env.PORT || 5000, console.error('server running...'))
+app.listen(process.env.PORT || 5000, console.log('server running...'))

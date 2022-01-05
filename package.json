@@ -16,6 +16,8 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "axios": "^0.24.0",
+    "js-sha1": "^0.6.0",
     "nodemon": "^2.0.15"
   }
 }
